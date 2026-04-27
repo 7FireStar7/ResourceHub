@@ -1,0 +1,481 @@
+/* ========== ГЛОБАЛЬНЫЙ СБРОС ========== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100vh;
+  background: #ECEFF1;
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#root {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ========== СТРАНИЦА АВТОРИЗАЦИИ ========== */
+.page-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 460px;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+}
+
+.auth-card {
+  width: 100%;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #37474F;
+  margin: 0 0 1.5rem;
+  letter-spacing: -0.5px;
+}
+
+/* Табы */
+.tabs {
+  display: flex;
+  width: 100%;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #CFD8DC;
+}
+
+.tab {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #78909C;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tab:hover {
+  color: #37474F;
+}
+
+.tab.active {
+  color: #1565C0;
+  border-bottom-color: #1565C0;
+}
+
+/* Форма */
+.auth-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #546E7A;
+}
+
+.field input {
+  padding: 0.75rem 1rem;
+  border: 1px solid #CFD8DC;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #37474F;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  background: #FAFAFA;
+}
+
+.field input:focus {
+  border-color: #1565C0;
+  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.1);
+}
+
+.submit-btn {
+  background: #1565C0;
+  color: white;
+  border: none;
+  padding: 0.85rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  margin-top: 0.5rem;
+}
+
+.submit-btn:hover {
+  background: #0D47A1;
+}
+
+.submit-btn:active {
+  transform: scale(0.98);
+}
+
+.submit-btn:disabled {
+  background: #90A4AE;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.forgot-link {
+  text-align: center;
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #607D8B;
+  text-decoration: none;
+}
+
+.forgot-link:hover {
+  color: #1565C0;
+  text-decoration: underline;
+}
+
+/* Иллюстрация */
+.illustration {
+  margin-top: 2rem;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.illustration svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+/* Сообщения об ошибках */
+.error-message {
+  color: #D32F2F;
+  background: #FFEBEE;
+  border: 1px solid #EF9A9A;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* ========== ДАШБОРД ========== */
+.dashboard-wrapper {
+  width: 100%;
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  align-self: flex-start;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+  font-size: 1.75rem;
+  color: #37474F;
+  margin: 0;
+}
+
+.logout-btn {
+  background: #EF5350;
+  color: white;
+  border: none;
+  padding: 0.55rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #D32F2F;
+}
+
+/* Вкладки дашборда */
+.dashboard-tabs {
+  display: flex;
+  border-bottom: 2px solid #CFD8DC;
+  margin-bottom: 2rem;
+}
+
+.dash-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #78909C;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  text-align: center;
+}
+
+.dash-tab:hover {
+  color: #37474F;
+}
+
+.dash-tab.active {
+  color: #1565C0;
+  border-bottom-color: #1565C0;
+}
+
+.dashboard-content h2 {
+  color: #37474F;
+}
+
+/* Сетка карточек ресурсов */
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.resource-card {
+  background: white;
+  padding: 1.25rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s;
+}
+
+.resource-card:hover {
+  transform: translateY(-2px);
+}
+
+.resource-card h3 {
+  margin: 0 0 0.5rem;
+  color: #37474F;
+}
+
+.resource-card p {
+  margin: 0.3rem 0;
+  font-size: 0.9rem;
+  color: #546E7A;
+}
+
+.status {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status.active {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.status.inactive {
+  background: #FFEBEE;
+  color: #C62828;
+}
+
+/* Кнопка "Забронировать" на карточке ресурса */
+button.book-btn {
+  margin-top: 1rem;
+  width: 100%;
+  background-color: #1565C0 !important;
+  color: white !important;
+  border: none;
+  padding: 0.6rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: block;
+}
+
+button.book-btn:hover {
+  background-color: #0D47A1 !important;
+}
+
+/* Список бронирований */
+.bookings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.booking-item {
+  background: white;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+.booking-item h3 {
+  margin: 0 0 0.5rem;
+  color: #1565C0;
+}
+
+.booking-item p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+/* Контейнер для кнопок действий */
+.booking-actions {
+  margin-top: 0.8rem;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center; /* центрируем кнопки */
+  padding: 0 0.5rem;       /* небольшой отступ по бокам, чтобы не прилипали */
+}
+
+/* Кнопка "Отменить" (красная) */
+.cancel-book-btn {
+  background: #EF5350;
+  color: white;
+  border: none;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cancel-book-btn:hover {
+  background: #D32F2F;
+}
+
+/* Кнопка "Завершить" (зелёная) */
+.complete-book-btn {
+  background: #43A047;
+  color: white;
+  border: none;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.complete-book-btn:hover {
+  background: #2E7D32;
+}
+
+/* ========== МОДАЛЬНОЕ ОКНО БРОНИРОВАНИЯ ========== */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+
+.modal-content h2 {
+  margin: 0 0 1.5rem;
+  color: #37474F;
+}
+
+.booking-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.cancel-btn {
+  background: #B0BEC5;
+  color: #37474F;
+  border: none;
+  padding: 0.85rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #90A4AE;
+}
+
+.slots-info {
+  background: #F5F7FA;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.slots-info h4 {
+  margin: 0 0 0.5rem;
+  color: #546E7A;
+}
+
+.slots-info ul {
+  list-style: none;
+  padding: 0;
+}
+
+.slots-info li {
+  font-size: 0.9rem;
+  color: #37474F;
+  padding: 0.25rem 0;
+}
