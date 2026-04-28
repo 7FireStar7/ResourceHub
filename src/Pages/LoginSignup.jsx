@@ -1,34 +1,45 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * Компонент страницы входа и регистрации.
+ * Переключается между двумя формами: Login и Sign Up.
+ * При успешной аутентификации сохраняет токен и перенаправляет на дашборд.
+ */
 function LoginSignup() {
-  // --- Состояния для переключения табов ---
-  const [activeTab, setActiveTab] = useState('login');
+  // Хук для навигации (переходов между страницами)
   const navigate = useNavigate();
 
-  // --- Поля для входа ---
+  // Активная вкладка: 'login' или 'signup'
+  const [activeTab, setActiveTab] = useState('login');
+
+  // Поля формы входа
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
 
-  // --- Поля для регистрации ---
+  // Поля формы регистрации
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupConfirm, setSignupConfirm] = useState('');
 
-  // --- Состояния для ошибок и загрузки ---
+  // Состояния для отображения ошибок и блокировки кнопок
   const [loginError, setLoginError] = useState('');
   const [signupError, setSignupError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
 
-  // --- Обработчик входа ---
+  /**
+   * Отправляет запрос на сервер для входа.
+   * При успехе сохраняет токен и данные пользователя в localStorage.
+   */
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoginError(''); // сбрасываем предыдущую ошибку
-    setLoginLoading(true); // включаем индикатор загрузки
+    e.preventDefault();               // предотвращаем перезагрузку страницы
+    setLoginError('');               // сбрасываем предыдущую ошибку
+    setLoginLoading(true);           // блокируем кнопку, пока идёт запрос
 
     try {
+      // POST-запрос на сервер (проксируется через Vite на localhost:3001)
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -38,28 +49,31 @@ function LoginSignup() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Сервер вернул ошибку (400, 401 и т.д.)
+        // Сервер вернул ошибку (например, неверный пароль)
         throw new Error(data.error || 'Ошибка входа');
       }
 
-      // Успешно: сохраняем токен и данные пользователя
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      navigate('/dashboard');
+      // Вход выполнен успешно
+      localStorage.setItem('token', data.token);           // сохраняем JWT
+      localStorage.setItem('user', JSON.stringify(data.user)); // сохраняем данные пользователя
+      navigate('/dashboard');                              // переходим на дашборд
     } catch (err) {
-      // Обрабатываем как сетевые ошибки, так и сообщения от сервера
+      // Ошибка сети или сервера – показываем пользователю
       setLoginError(err.message || 'Не удалось подключиться к серверу');
     } finally {
-      setLoginLoading(false);
+      setLoginLoading(false);          // разблокируем кнопку
     }
   };
 
-  // --- Обработчик регистрации ---
+  /**
+   * Отправляет запрос на регистрацию.
+   * Перед отправкой проверяет совпадение паролей.
+   */
   const handleSignup = async (e) => {
     e.preventDefault();
     setSignupError('');
 
-    // Проверка совпадения паролей (на клиенте)
+    // Проверка совпадения паролей на стороне клиента
     if (signupPassword !== signupConfirm) {
       setSignupError('Пароли не совпадают');
       return;
@@ -84,7 +98,7 @@ function LoginSignup() {
         throw new Error(data.error || 'Ошибка регистрации');
       }
 
-      // Регистрация успешна – сразу логинимся (сохраняем токен)
+      // После успешной регистрации сразу выполняем вход
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       navigate('/dashboard');
@@ -95,13 +109,12 @@ function LoginSignup() {
     }
   };
 
-  // --- Рендер ---
   return (
     <div className="page-wrapper">
       <div className="auth-card">
         <h1 className="logo">ResourceHub</h1>
 
-        {/* Переключатель табов */}
+        {/* Переключатель вкладок Login / Sign Up */}
         <div className="tabs">
           <button
             className={`tab ${activeTab === 'login' ? 'active' : ''}`}
@@ -117,7 +130,7 @@ function LoginSignup() {
           </button>
         </div>
 
-        {/* ======== Форма Входа ======== */}
+        {/* Форма входа – показывается, если активна вкладка login */}
         {activeTab === 'login' && (
           <form onSubmit={handleLogin} className="auth-form">
             <div className="field">
@@ -143,7 +156,7 @@ function LoginSignup() {
               />
             </div>
 
-            {/* Блок ошибки входа */}
+            {/* Сообщение об ошибке входа */}
             {loginError && <div className="error-message">{loginError}</div>}
 
             <button type="submit" className="submit-btn" disabled={loginLoading}>
@@ -155,7 +168,7 @@ function LoginSignup() {
           </form>
         )}
 
-        {/* ======== Форма Регистрации ======== */}
+        {/* Форма регистрации – показывается, если активна вкладка signup */}
         {activeTab === 'signup' && (
           <form onSubmit={handleSignup} className="auth-form">
             <div className="field">
@@ -203,7 +216,6 @@ function LoginSignup() {
               />
             </div>
 
-            {/* Блок ошибки регистрации */}
             {signupError && <div className="error-message">{signupError}</div>}
 
             <button type="submit" className="submit-btn" disabled={signupLoading}>
@@ -213,7 +225,7 @@ function LoginSignup() {
         )}
       </div>
 
-      {/* Иллюстрация */}
+      {/* Декоративная SVG-иллюстрация переговорной комнаты */}
       <div className="illustration" aria-hidden="true">
         <svg viewBox="0 0 400 200" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="120" y="100" width="160" height="20" rx="3" fill="#B0BEC5" />

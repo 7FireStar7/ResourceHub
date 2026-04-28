@@ -1,47 +1,62 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * Главная страница после входа – дашборд.
+ * Отображает переговорки, брони пользователя, а для админа – управление ресурсами.
+ */
 function Dashboard() {
   const navigate = useNavigate();
+
+  // Данные текущего пользователя
   const [user, setUser] = useState(null);
+
+  // Активная вкладка: resources / bookings / admin
   const [activeTab, setActiveTab] = useState('resources');
+
+  // Списки данных, загружаемые с сервера
   const [resources, setResources] = useState([]);
   const [myBookings, setMyBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Состояния для бронирования
-  const [showModal, setShowModal] = useState(false);
-  const [selectedResource, setSelectedResource] = useState(null);
+  // ---------- Состояния для модального окна бронирования ----------
+  const [showModal, setShowModal] = useState(false);                // открыто ли окно
+  const [selectedResource, setSelectedResource] = useState(null);    // какой ресурс бронируем
   const [bookingDate, setBookingDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [purpose, setPurpose] = useState('');
-  const [slots, setSlots] = useState([]);
+  const [purpose, setPurpose] = useState('');                       // цель бронирования
+  const [slots, setSlots] = useState([]);                           // занятые слоты на дату
   const [bookingError, setBookingError] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
 
-  // Админка: управление ресурсами
+  // ---------- Состояния для админского модального окна (создание/редактирование ресурса) ----------
   const [showResourceModal, setShowResourceModal] = useState(false);
-  const [editingResource, setEditingResource] = useState(null);
+  const [editingResource, setEditingResource] = useState(null);     // null = создание, объект = редактирование
   const [resForm, setResForm] = useState({
     name: '', description: '', type: '', capacity: '', is_active: true,
   });
   const [resFormError, setResFormError] = useState('');
   const [resFormLoading, setResFormLoading] = useState(false);
 
+  // Токен для авторизации (получаем из localStorage)
   const token = localStorage.getItem('token');
-  const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+  // Заголовки для fetch-запросов
+  const headers = token ? { Authorization: 'Bearer ' + token } : {};
 
+  // При первом рендере проверяем, авторизован ли пользователь, и загружаем данные
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (!token || !userData) {
-      navigate('/', { replace: true });
+      navigate('/', { replace: true });   // если нет токена, уходим на страницу входа
       return;
     }
+
     const parsedUser = JSON.parse(userData);
     setUser(parsedUser);
 
+    // Загружаем ресурсы и бронирования параллельно
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -51,10 +66,13 @@ function Dashboard() {
         ]);
         if (!resRes.ok) throw new Error('Ошибка загрузки ресурсов');
         if (!bookRes.ok) throw new Error('Ошибка загрузки бронирований');
+
         const allResources = await resRes.json();
         const allBookings = await bookRes.json();
+
         setResources(allResources);
-        setMyBookings(allBookings.filter(b => b.status === 'active'));
+        // Для обычного пользователя показываем только активные брони
+        setMyBookings(allBookings.filter((b) => b.status === 'active'));
       } catch (err) {
         setError(err.message);
         console.error(err);
@@ -62,18 +80,23 @@ function Dashboard() {
         setLoading(false);
       }
     };
-    fetchData();
-  }, [token, navigate]);
 
+    fetchData();
+  }, [token, navigate]); // зависимость от токена – если он изменится, эффект перезапустится
+
+  // Выход из системы
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/', { replace: true });
   };
 
-  // ----- Бронирование -----
+  // ========== Бронирование ==========
+
+  /** Открыть модальное окно бронирования для выбранного ресурса */
   const openBooking = (resource) => {
     setSelectedResource(resource);
+    // Сбрасываем поля
     setBookingDate('');
     setStartTime('');
     setEndTime('');
@@ -83,6 +106,7 @@ function Dashboard() {
     setShowModal(true);
   };
 
+  /** Загрузить занятые слоты для выбранного ресурса и даты */
   const loadSlots = async (date) => {
     if (!date || !selectedResource) return;
     try {
@@ -94,24 +118,35 @@ function Dashboard() {
     }
   };
 
+  // Как только изменилась дата бронирования, подгружаем слоты
   useEffect(() => {
-    if (bookingDate) loadSlots(bookingDate);
+    if (bookingDate) {
+      loadSlots(bookingDate);
+    }
   }, [bookingDate, selectedResource]);
 
+  /** Отправить запрос на создание бронирования */
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
+
+    // Простейшая валидация
     if (!bookingDate || !startTime || !endTime) {
       setBookingError('Заполните дату и время');
       return;
     }
+
+    // Преобразуем локальное время в ISO-строки для сервера
     const startISO = new Date(`${bookingDate}T${startTime}`).toISOString();
     const endISO = new Date(`${bookingDate}T${endTime}`).toISOString();
+
     if (new Date(startISO) >= new Date(endISO)) {
       setBookingError('Время начала должно быть раньше окончания');
       return;
     }
+
     setBookingLoading(true);
     setBookingError('');
+
     try {
       const res = await fetch('/api/bookings', {
         method: 'POST',
@@ -125,8 +160,10 @@ function Dashboard() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Ошибка создания бронирования');
-      setMyBookings(prev => [data, ...prev]);
-      setShowModal(false);
+
+      // Добавляем новое бронирование в начало списка
+      setMyBookings((prev) => [data, ...prev]);
+      setShowModal(false); // закрываем окно
     } catch (err) {
       setBookingError(err.message);
     } finally {
@@ -134,27 +171,32 @@ function Dashboard() {
     }
   };
 
+  /** Отменить бронирование (меняет статус на 'cancelled') */
   const cancelBooking = async (bookingId) => {
     if (!confirm('Вы уверены, что хотите отменить это бронирование?')) return;
     try {
       await fetch(`/api/bookings/${bookingId}`, { method: 'DELETE', headers });
-      setMyBookings(prev => prev.filter(b => b.id !== bookingId));
+      // Удаляем бронь из локального списка
+      setMyBookings((prev) => prev.filter((b) => b.id !== bookingId));
     } catch (err) {
       alert(err.message);
     }
   };
 
+  /** Завершить бронирование досрочно (статус 'completed') */
   const completeBooking = async (bookingId) => {
     if (!confirm('Завершить это бронирование досрочно?')) return;
     try {
       await fetch(`/api/bookings/${bookingId}/complete`, { method: 'PUT', headers });
-      setMyBookings(prev => prev.filter(b => b.id !== bookingId));
+      setMyBookings((prev) => prev.filter((b) => b.id !== bookingId));
     } catch (err) {
       alert(err.message);
     }
   };
 
-  // ----- Админские функции для ресурсов -----
+  // ========== Административные функции для ресурсов ==========
+
+  /** Открыть форму создания нового ресурса */
   const openAddResource = () => {
     setEditingResource(null);
     setResForm({ name: '', description: '', type: '', capacity: '', is_active: true });
@@ -162,6 +204,7 @@ function Dashboard() {
     setShowResourceModal(true);
   };
 
+  /** Открыть форму редактирования существующего ресурса */
   const openEditResource = (resource) => {
     setEditingResource(resource);
     setResForm({
@@ -175,14 +218,18 @@ function Dashboard() {
     setShowResourceModal(true);
   };
 
+  /** Обработчик отправки формы создания/редактирования ресурса */
   const handleResourceSubmit = async (e) => {
     e.preventDefault();
     if (!resForm.name.trim()) {
       setResFormError('Название обязательно');
       return;
     }
+
     setResFormLoading(true);
     setResFormError('');
+
+    // Формируем данные для отправки
     const payload = {
       name: resForm.name,
       description: resForm.description,
@@ -190,8 +237,11 @@ function Dashboard() {
       capacity: resForm.capacity ? parseInt(resForm.capacity) : null,
       is_active: resForm.is_active,
     };
+
     const method = editingResource ? 'PUT' : 'POST';
-    const url = editingResource ? `/api/resources/${editingResource.id}` : '/api/resources';
+    const url = editingResource
+      ? `/api/resources/${editingResource.id}`
+      : '/api/resources';
 
     try {
       const res = await fetch(url, {
@@ -201,6 +251,8 @@ function Dashboard() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Ошибка сохранения');
+
+      // Обновляем список ресурсов с сервера
       const updatedRes = await fetch('/api/resources', { headers });
       setResources(await updatedRes.json());
       setShowResourceModal(false);
@@ -211,119 +263,148 @@ function Dashboard() {
     }
   };
 
+  /** Удалить ресурс (с подтверждением) */
   const deleteResource = async (id, name) => {
     if (!confirm(`Удалить ресурс "${name}"? Это также удалит все связанные бронирования.`)) return;
     try {
       await fetch(`/api/resources/${id}`, { method: 'DELETE', headers });
-      setResources(prev => prev.filter(r => r.id !== id));
+      // Убираем удалённый ресурс из локального состояния
+      setResources((prev) => prev.filter((r) => r.id !== id));
     } catch (err) {
       alert(err.message);
     }
   };
 
-  // Авто-высота textarea
+  /** Автоматически изменять высоту textarea по мере ввода текста */
   const autoResize = (e) => {
     e.target.style.height = 'auto';
     e.target.style.height = e.target.scrollHeight + 'px';
   };
 
+  // Пока данные пользователя не загружены, ничего не рендерим (избегаем мигания)
   if (!user) return null;
 
   const isAdmin = user.is_admin;
 
   return (
     <div className="dashboard-wrapper">
+      {/* Верхняя шапка */}
       <header className="dashboard-header">
-        <h1>Добро пожаловать, {user.full_name} {isAdmin && <span className="admin-badge">Админ</span>}</h1>
+        <h1>
+          Добро пожаловать, {user.full_name}
+          {isAdmin && <span className="admin-badge">Админ</span>}
+        </h1>
         <button onClick={handleLogout} className="logout-btn">Выйти</button>
       </header>
 
+      {/* Вкладки */}
       <div className="dashboard-tabs">
-        <button className={`dash-tab ${activeTab === 'resources' ? 'active' : ''}`} onClick={() => setActiveTab('resources')}>Переговорки</button>
-        <button className={`dash-tab ${activeTab === 'bookings' ? 'active' : ''}`} onClick={() => setActiveTab('bookings')}>Мои брони</button>
+        <button className={`dash-tab ${activeTab === 'resources' ? 'active' : ''}`}
+                onClick={() => setActiveTab('resources')}>Переговорки</button>
+        <button className={`dash-tab ${activeTab === 'bookings' ? 'active' : ''}`}
+                onClick={() => setActiveTab('bookings')}>Мои брони</button>
         {isAdmin && (
-          <button className={`dash-tab ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>Управление</button>
+          <button className={`dash-tab ${activeTab === 'admin' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('admin')}>Управление</button>
         )}
       </div>
 
+      {/* Контент вкладок */}
       <div className="dashboard-content">
-        {loading ? <p>Загрузка...</p> : error ? <p className="error-message">{error}</p> : (
-          activeTab === 'resources' ? (
-            <div>
-              <h2>Доступные ресурсы</h2>
-              {resources.filter(r => r.is_active).length === 0 ? (
-                <p>Нет доступных переговорок.</p>
-              ) : (
-                <div className="resources-grid">
-                  {resources.filter(r => r.is_active).map(res => (
-                    <div key={res.id} className="resource-card">
-                      <h3>{res.name}</h3>
-                      <p><strong>Тип:</strong> {res.type || 'Не указан'}</p>
-                      <p><strong>Вместимость:</strong> {res.capacity || '—'} чел.</p>
-                      <p><strong>Описание:</strong> {res.description || 'Нет описания'}</p>
-                      <span className="status active">Активен</span>
-                      <button className="book-btn" onClick={() => openBooking(res)}>Забронировать</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : activeTab === 'bookings' ? (
-            <div>
-              <h2>Мои бронирования</h2>
-              {myBookings.length === 0 ? (
-                <p>У вас пока нет активных бронирований.</p>
-              ) : (
-                <div className="bookings-list">
-                  {myBookings.map(b => (
-                    <div key={b.id} className="booking-item">
-                      <h3>{b.resource_name}</h3>
-                      <p><strong>С:</strong> {new Date(b.start_time).toLocaleString()}<br />
-                      <strong>По:</strong> {new Date(b.end_time).toLocaleString()}</p>
-                      <p><strong>Статус:</strong> {b.status}</p>
-                      {b.purpose && <p><strong>Цель:</strong> {b.purpose}</p>}
-                      <div className="booking-actions">
-                        <button className="cancel-book-btn" onClick={() => cancelBooking(b.id)}>Отменить</button>
-                        <button className="complete-book-btn" onClick={() => completeBooking(b.id)}>Завершить</button>
+        {loading ? (
+          <p>Загрузка...</p>
+        ) : error ? (
+          <p className="error-message">{error}</p>
+        ) : (
+          <>
+            {/* Вкладка «Переговорки» */}
+            {activeTab === 'resources' && (
+              <div>
+                <h2>Доступные ресурсы</h2>
+                {resources.filter(r => r.is_active).length === 0 ? (
+                  <p>Нет доступных переговорок.</p>
+                ) : (
+                  <div className="resources-grid">
+                    {resources.filter(r => r.is_active).map(res => (
+                      <div key={res.id} className="resource-card">
+                        <h3>{res.name}</h3>
+                        <p><strong>Тип:</strong> {res.type || 'Не указан'}</p>
+                        <p><strong>Вместимость:</strong> {res.capacity || '—'} чел.</p>
+                        <p><strong>Описание:</strong> {res.description || 'Нет описания'}</p>
+                        <span className="status active">Активен</span>
+                        <button className="book-btn" onClick={() => openBooking(res)}>Забронировать</button>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2>Управление ресурсами</h2>
-                <button className="submit-btn" style={{ width: 'auto', padding: '0.6rem 1.2rem' }} onClick={openAddResource}>Добавить ресурс</button>
+                    ))}
+                  </div>
+                )}
               </div>
-              {resources.length === 0 ? (
-                <p>Ресурсы отсутствуют. Создайте первый.</p>
-              ) : (
-                <div className="resources-grid" style={{ marginTop: '1rem' }}>
-                  {resources.map(res => (
-                    <div key={res.id} className="resource-card">
-                      <h3>{res.name}</h3>
-                      <p><strong>Тип:</strong> {res.type || '—'}</p>
-                      <p><strong>Вместимость:</strong> {res.capacity || '—'}</p>
-                      <p><strong>Описание:</strong> {res.description || '—'}</p>
-                      <span className={`status ${res.is_active ? 'active' : 'inactive'}`}>
-                        {res.is_active ? 'Активен' : 'Неактивен'}
-                      </span>
-                      <div className="booking-actions" style={{ marginTop: '0.8rem' }}>
-                        <button className="complete-book-btn" onClick={() => openEditResource(res)}>Редактировать</button>
-                        <button className="cancel-book-btn" onClick={() => deleteResource(res.id, res.name)}>Удалить</button>
+            )}
+
+            {/* Вкладка «Мои брони» */}
+            {activeTab === 'bookings' && (
+              <div>
+                <h2>Мои бронирования</h2>
+                {myBookings.length === 0 ? (
+                  <p>У вас пока нет активных бронирований.</p>
+                ) : (
+                  <div className="bookings-list">
+                    {myBookings.map(b => (
+                      <div key={b.id} className="booking-item">
+                        <h3>{b.resource_name}</h3>
+                        <p>
+                          <strong>С:</strong> {new Date(b.start_time).toLocaleString()}<br />
+                          <strong>По:</strong> {new Date(b.end_time).toLocaleString()}
+                        </p>
+                        <p><strong>Статус:</strong> {b.status}</p>
+                        {b.purpose && <p><strong>Цель:</strong> {b.purpose}</p>}
+                        <div className="booking-actions">
+                          <button className="cancel-book-btn" onClick={() => cancelBooking(b.id)}>Отменить</button>
+                          <button className="complete-book-btn" onClick={() => completeBooking(b.id)}>Завершить</button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Вкладка «Управление» – только для админа */}
+            {activeTab === 'admin' && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h2>Управление ресурсами</h2>
+                  <button className="submit-btn"
+                    style={{ width: 'auto', padding: '0.6rem 1.2rem' }}
+                    onClick={openAddResource}>Добавить ресурс</button>
                 </div>
-              )}
-            </div>
-          )
+                {resources.length === 0 ? (
+                  <p>Ресурсы отсутствуют. Создайте первый.</p>
+                ) : (
+                  <div className="resources-grid" style={{ marginTop: '1rem' }}>
+                    {resources.map(res => (
+                      <div key={res.id} className="resource-card">
+                        <h3>{res.name}</h3>
+                        <p><strong>Тип:</strong> {res.type || '—'}</p>
+                        <p><strong>Вместимость:</strong> {res.capacity || '—'}</p>
+                        <p><strong>Описание:</strong> {res.description || '—'}</p>
+                        <span className={`status ${res.is_active ? 'active' : 'inactive'}`}>
+                          {res.is_active ? 'Активен' : 'Неактивен'}
+                        </span>
+                        <div className="booking-actions" style={{ marginTop: '0.8rem' }}>
+                          <button className="complete-book-btn" onClick={() => openEditResource(res)}>Редактировать</button>
+                          <button className="cancel-book-btn" onClick={() => deleteResource(res.id, res.name)}>Удалить</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* Модальное окно бронирования */}
+      {/* ========== Модальное окно бронирования ========== */}
       {showModal && selectedResource && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -375,7 +456,7 @@ function Dashboard() {
         </div>
       )}
 
-      {/* Модальное окно добавления/редактирования ресурса */}
+      {/* ========== Модальное окно создания/редактирования ресурса ========== */}
       {showResourceModal && (
         <div className="modal-overlay" onClick={() => setShowResourceModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -383,50 +464,35 @@ function Dashboard() {
             <form onSubmit={handleResourceSubmit} className="booking-form">
               <div className="field">
                 <label>Название *</label>
-                <input
-                  type="text"
-                  value={resForm.name}
-                  onChange={(e) => setResForm({ ...resForm, name: e.target.value })}
-                  required
-                />
+                <input type="text" value={resForm.name}
+                       onChange={(e) => setResForm({ ...resForm, name: e.target.value })} required />
               </div>
               <div className="field">
                 <label>Тип</label>
-                <input
-                  type="text"
-                  placeholder="переговорка, оборудование..."
-                  value={resForm.type}
-                  onChange={(e) => setResForm({ ...resForm, type: e.target.value })}
-                />
+                <input type="text" placeholder="переговорка, оборудование..."
+                       value={resForm.type}
+                       onChange={(e) => setResForm({ ...resForm, type: e.target.value })} />
               </div>
               <div className="field">
                 <label>Вместимость</label>
-                <input
-                  type="number"
-                  value={resForm.capacity}
-                  onChange={(e) => setResForm({ ...resForm, capacity: e.target.value })}
-                />
+                <input type="number" value={resForm.capacity}
+                       onChange={(e) => setResForm({ ...resForm, capacity: e.target.value })} />
               </div>
               <div className="field">
                 <label>Описание</label>
-                <textarea
-                  rows={3}
-                  value={resForm.description}
-                  onChange={(e) => {
-                    setResForm({ ...resForm, description: e.target.value });
-                    autoResize(e);
-                  }}
-                  style={{ minHeight: '5rem' }}
+                <textarea rows={3} value={resForm.description}
+                          onChange={(e) => {
+                            setResForm({ ...resForm, description: e.target.value });
+                            autoResize(e);
+                          }}
+                          style={{ minHeight: '5rem' }}
                 />
               </div>
               <div className="field">
                 <label>
-                  <input
-                    type="checkbox"
-                    checked={resForm.is_active}
-                    onChange={(e) => setResForm({ ...resForm, is_active: e.target.checked })}
-                  />{' '}
-                  Активен
+                  <input type="checkbox" checked={resForm.is_active}
+                         onChange={(e) => setResForm({ ...resForm, is_active: e.target.checked })} />
+                  {' '}Активен
                 </label>
               </div>
               {resFormError && <p className="error-message">{resFormError}</p>}

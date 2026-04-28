@@ -1,11 +1,13 @@
 /* ========== ГЛОБАЛЬНЫЙ СБРОС ========== */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html, body {
-  margin: 0;
-  padding: 0;
   width: 100%;
   overflow-x: hidden;
 }
@@ -34,7 +36,6 @@ body {
   width: 100%;
   max-width: 460px;
   padding: 2rem 1rem;
-  box-sizing: border-box;
 }
 
 .auth-card {
@@ -107,18 +108,20 @@ body {
   color: #546E7A;
 }
 
-.field input {
+.field input,
+.field textarea {
   padding: 0.75rem 1rem;
   border: 1px solid #CFD8DC;
   border-radius: 8px;
   font-size: 1rem;
   color: #37474F;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  outline: none;
   background: #FAFAFA;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.field input:focus {
+.field input:focus,
+.field textarea:focus {
   border-color: #1565C0;
   box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.1);
 }
@@ -127,13 +130,16 @@ body {
   background: #1565C0;
   color: white;
   border: none;
-  padding: 0.85rem;
+  padding: 0.85rem 1.25rem;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s, transform 0.1s;
   margin-top: 0.5rem;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .submit-btn:hover {
@@ -168,7 +174,6 @@ body {
 .illustration {
   margin-top: 2rem;
   width: 100%;
-  max-width: 100%;
   display: flex;
   justify-content: center;
 }
@@ -313,7 +318,7 @@ body {
   color: #C62828;
 }
 
-/* Кнопка "Забронировать" на карточке ресурса */
+/* Кнопка "Забронировать" */
 button.book-btn {
   margin-top: 1rem;
   width: 100%;
@@ -359,16 +364,14 @@ button.book-btn:hover {
   font-size: 0.9rem;
 }
 
-/* Контейнер для кнопок действий */
+/* Кнопки действий в бронировании */
 .booking-actions {
   margin-top: 0.8rem;
   display: flex;
   gap: 0.5rem;
   justify-content: center;
-  padding: 0 0.5rem;
 }
 
-/* Кнопка "Отменить" (красная) */
 .cancel-book-btn {
   background: #EF5350;
   color: white;
@@ -385,7 +388,6 @@ button.book-btn:hover {
   background: #D32F2F;
 }
 
-/* Кнопка "Завершить" (зелёная) */
 .complete-book-btn {
   background: #43A047;
   color: white;
@@ -402,7 +404,7 @@ button.book-btn:hover {
   background: #2E7D32;
 }
 
-/* ========== МОДАЛЬНОЕ ОКНО БРОНИРОВАНИЯ ========== */
+/* ========== МОДАЛЬНЫЕ ОКНА ========== */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0;
@@ -442,17 +444,19 @@ button.book-btn:hover {
   margin-top: 1rem;
 }
 
-/* Кнопка "Отмена" – серая, но с одинаковыми размерами как у "Создать" */
 .cancel-btn {
   background: #B0BEC5;
   color: #37474F;
   border: none;
-  padding: 0.85rem;
+  padding: 0.85rem 1.25rem;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .cancel-btn:hover {
@@ -481,26 +485,17 @@ button.book-btn:hover {
   padding: 0.25rem 0;
 }
 
-/* ========== ИСПРАВЛЕНИЯ ВИЗУАЛА ========== */
-
-/* Убираем стрелочки у числового инпута (вместимость) */
+/* ========== УБИРАЕМ СТРЕЛКИ У ЧИСЛОВОГО ИНПУТА ========== */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
+  appearance: none;               /* ← стандартное свойство */
   margin: 0;
 }
+
 input[type="number"] {
   -moz-appearance: textfield;
-}
-
-/* Светлый фон для всех текстовых полей в модалках */
-.modal-content textarea,
-.modal-content input[type="text"],
-.modal-content input[type="number"],
-.modal-content input[type="date"],
-.modal-content input[type="time"] {
-  background-color: #FAFAFA;
-  color: #37474F;
+  appearance: textfield;          /* ← стандартное свойство */
 }
 
 /* Бейдж "Админ" */
@@ -517,37 +512,4 @@ input[type="number"] {
   line-height: 1.4;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-}
-
-/* Текстовое поле "Описание" – теперь с такой же жирностью, как у других полей */
-.modal-content textarea {
-  font: inherit;
-  font-size: 1rem;
-  font-weight: 500;
-  resize: none;
-  border: 1px solid #CFD8DC;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  line-height: 1.5;
-  min-height: 5rem;
-  color: #37474F;
-  background-color: #FAFAFA;
-}
-
-.modal-content textarea:focus {
-  border-color: #1565C0;
-  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.1);
-  outline: none;
-}
-
-/* Принудительно одинаковый размер для кнопок "Создать" и "Отмена" в модалках */
-.modal-content .submit-btn,
-.modal-content .cancel-btn {
-  padding: 0.85rem 1.25rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 8px;
-  height: auto;
-  line-height: normal;
-  box-sizing: border-box;
 }
