@@ -513,3 +513,190 @@ input[type="number"] {
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
+
+/* ========== КАЛЕНДАРЬ (SPRINT 3) ========== */
+.calendar-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.calendar-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.calendar-nav button {
+  background: #1565C0;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+
+.calendar-nav button:hover {
+  background: #0D47A1;
+}
+
+.calendar-nav h3 {
+  margin: 0;
+  color: #37474F;
+  font-size: 1.25rem;
+}
+
+.calendar-grid {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-weight: 600;
+  color: #546E7A;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #CFD8DC;
+}
+
+.calendar-body {
+  flex: 1;
+}
+
+.calendar-cell {
+  border: 1px solid #E0E0E0;
+  padding: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 0.75rem;
+  background: white;
+  transition: background 0.2s;
+  min-height: 0;
+}
+
+.calendar-cell.clickable {
+  cursor: pointer;
+}
+
+.calendar-cell.clickable:hover {
+  background: #F5F5F5;
+}
+
+.calendar-cell.empty {
+  background: #F9F9F9;
+}
+
+.day-number {
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+  color: #37474F;
+}
+
+.resource-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.resource-item {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  white-space: nowrap;
+}
+
+/* Новый стиль для неактивного ресурса */
+.resource-item.inactive {
+  background-color: #F5F5F5;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.resource-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.more-resources {
+  font-size: 0.65rem;
+  color: #78909C;
+  align-self: center;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Модальное окно дня (список ресурсов) */
+.day-modal {
+  max-width: 600px;
+}
+
+.resource-day-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.resource-day-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #E0E0E0;
+}
+
+.resource-day-list li:last-child {
+  border-bottom: none;
+}
+
+/* Стиль для неактивного элемента в списке дня */
+.resource-day-list li.inactive {
+  background-color: #F5F5F5;
+}
+
+.resource-info {
+  flex: 1;
+}
+
+.inactive-label {
+  color: #757575;
+  font-style: italic;
+  margin-left: 0.3rem;
+}
+
+.expired-label {
+  color: #9E9E9E;
+  font-style: italic;
+  margin-left: 0.3rem;
+}
+
+.resource-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Информация о доступном времени в форме бронирования */
+.availability-info {
+  font-size: 0.9rem;
+  color: #546E7A;
+  margin-bottom: 0.5rem;
+}
+
+.availability-info strong {
+  font-weight: 600;
+}
