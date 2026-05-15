@@ -1,21 +1,54 @@
-HEAD
-# ResourceHub
-Проект - сайт для бронирования переговорных комнат, оборудования и т.д.
+# 📅 ResourceHub
 
-# React + Vite
+**Система бронирования переговорных комнат и оборудования**  
+Полнофункциональное веб-приложение с календарём доступности, ролевой моделью и защитой от конфликтов бронирования.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![Страница Регистрации](screenshots/loginSignupPage.png)
+![Дизайн Календаря](screenshots/calendarUIDesign.png)
+![Управление ресурсами](screenshots/adminResourceManagement.png)
+![Создание Ресурса](screenshots/createRecource.png)
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Основные возможности
 
-## React Compiler
+- 🗓️ **Календарь ресурсов** с помесячной навигацией и цветовой индикацией занятости (свободен/частично занят/занят/истёк/неактивен)
+- 🔐 **Ролевая модель** – обычный пользователь и администратор
+- ➕ **Управление ресурсами** – создание, редактирование, удаление с указанием периода доступности и времени работы
+- 📋 **Бронирование** – выбор даты и времени в пределах доступности ресурса
+- ❌ **Отмена бронирования** с автоматическим обновлением календаря
+- 🛡️ **Защита от двойного бронирования** (double booking) на уровне базы данных и сервера
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🧱 Технологический стек
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-c29c07e (Initial commit: ResourceHub frontend + backend)
+| Слой | Технологии |
+|------|-----------|
+| **Frontend** | React 18, Vite, React Router v6, CSS |
+| **Backend**  | Node.js, Express, jsonwebtoken, bcrypt |
+| **Database** | PostgreSQL, pg (node-postgres), btree_gist |
+| **Tools**    | Git, GitHub, pgAdmin, VS Code |
+
+---
+
+## 🏗️ Архитектура
+
+Приложение построено на классической клиент‑серверной архитектуре.
+
+- **Клиент** (React) – одностраничное приложение, общающееся с сервером по REST API
+- **Сервер** (Express) – обрабатывает запросы, взаимодействует с PostgreSQL, управляет аутентификацией и авторизацией через JWT
+- **База данных** (PostgreSQL) – хранит пользователей, ресурсы и бронирования, обеспечивает целостность данных
+
+[Browser] ←→ [React + Vite] ←→ [Express API] ←→ [PostgreSQL]
+
+---
+
+## 🛡️ Защита от конфликтов (double booking)
+
+- На уровне базы данных используется **частичный уникальный индекс** с `btree_gist`:
+
+```sql
+CREATE UNIQUE INDEX bookings_active_no_overlap
+ON bookings (resource_id, tstzrange(start_time, end_time))
+WHERE status = 'active';
