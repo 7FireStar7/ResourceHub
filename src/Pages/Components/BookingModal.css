@@ -1,0 +1,146 @@
+/* ========== МОДАЛЬНОЕ ОКНО БРОНИРОВАНИЯ ========== */
+/* (эти стили можно скопировать из App.css, заменив селекторы при необходимости) */
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+
+.modal-content h2 {
+  margin: 0 0 1.5rem;
+  color: #37474F;
+}
+
+.booking-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #546E7A;
+}
+
+.field input,
+.field textarea {
+  padding: 0.75rem 1rem;
+  border: 1px solid #CFD8DC;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #37474F;
+  background: #FAFAFA;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: #1565C0;
+  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.1);
+}
+
+.submit-btn {
+  background: #1565C0;
+  color: white;
+  border: none;
+  padding: 0.85rem 1.25rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  margin-top: 0.5rem;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.submit-btn:hover {
+  background: #0D47A1;
+}
+
+.submit-btn:active {
+  transform: scale(0.98);
+}
+
+.submit-btn:disabled {
+  background: #90A4AE;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancel-btn {
+  background: #B0BEC5;
+  color: #37474F;
+  border: none;
+  padding: 0.85rem 1.25rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cancel-btn:hover {
+  background: #90A4AE;
+}
+
+.slots-info {
+  background: #F5F7FA;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.slots-info h4 {
+  margin: 0 0 0.5rem;
+  color: #546E7A;
+}
+
+.slots-info ul {
+  list-style: none;
+  padding: 0;
+}
+
+.slots-info li {
+  font-size: 0.9rem;
+  color: #37474F;
+  padding: 0.25rem 0;
+}
+
+.availability-info {
+  font-size: 0.9rem;
+  color: #546E7A;
+  margin-bottom: 0.5rem;
+}
+
+.availability-info strong {
+  font-weight: 600;
+}

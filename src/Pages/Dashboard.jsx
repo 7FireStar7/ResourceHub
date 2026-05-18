@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Calendar from './components/Calendar';
+import BookingModal from './components/BookingModal';
+import DayModal from './components/DayModal';
+import ResourceModal from './components/ResourceModal';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -126,21 +130,11 @@ function Dashboard() {
     }
   };
 
+  // Исправлено: закрываем DayModal и сразу открываем BookingModal (без setTimeout)
   const startBookingFromDay = (resource) => {
     setShowDayModal(false);
     setSelectedResource(resource);
     setBookingDate(selectedDay);
-    setStartTime('');
-    setEndTime('');
-    setPurpose('');
-    setSlots([]);
-    setBookingError('');
-    setShowModal(true);
-  };
-
-  const openBooking = (resource, date = null) => {
-    setSelectedResource(resource);
-    setBookingDate(date || '');
     setStartTime('');
     setEndTime('');
     setPurpose('');
@@ -164,7 +158,6 @@ function Dashboard() {
     if (bookingDate) loadSlots(bookingDate);
   }, [bookingDate, selectedResource]);
 
-  // ---------- Бронирование: создание ----------
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
     if (!bookingDate || !startTime || !endTime) {
@@ -193,7 +186,7 @@ function Dashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Ошибка создания бронирования');
       setMyBookings(prev => [data, ...prev]);
-      setCurrentDate(new Date(currentDate)); // <-- обновляем календарь
+      setCurrentDate(new Date(currentDate));
       setShowModal(false);
     } catch (err) {
       setBookingError(err.message);
@@ -202,13 +195,12 @@ function Dashboard() {
     }
   };
 
-  // ---------- Отмена бронирования ----------
   const cancelBooking = async (bookingId) => {
     if (!confirm('Вы уверены, что хотите отменить это бронирование?')) return;
     try {
       await fetch(`/api/bookings/${bookingId}`, { method: 'DELETE', headers });
       setMyBookings(prev => prev.filter(b => b.id !== bookingId));
-      setCurrentDate(new Date(currentDate)); // <-- обновляем календарь
+      setCurrentDate(new Date(currentDate));
     } catch (err) {
       alert(err.message);
     }
@@ -275,7 +267,7 @@ function Dashboard() {
       const updatedRes = await fetch('/api/resources', { headers });
       setResources(await updatedRes.json());
       setShowResourceModal(false);
-      setCurrentDate(new Date(currentDate)); // <-- обновляем календарь
+      setCurrentDate(new Date(currentDate));
     } catch (err) {
       setResFormError(err.message);
     } finally {
@@ -288,7 +280,7 @@ function Dashboard() {
     try {
       await fetch(`/api/resources/${id}`, { method: 'DELETE', headers });
       setResources(prev => prev.filter(r => r.id !== id));
-      setCurrentDate(new Date(currentDate)); // <-- обновляем календарь
+      setCurrentDate(new Date(currentDate));
     } catch (err) {
       alert(err.message);
     }
@@ -323,24 +315,6 @@ function Dashboard() {
     }
   }
 
-  const StatusDot = ({ status, isActive = true }) => {
-    let color;
-    if (!isActive) {
-      color = '#BDBDBD';
-    } else if (status === 'free') {
-      color = '#4CAF50';
-    } else if (status === 'partial') {
-      color = '#FF9800';
-    } else if (status === 'full') {
-      color = '#F44336';
-    } else if (status === 'expired') {
-      color = '#9E9E9E';
-    } else {
-      color = '#BDBDBD';
-    }
-    return <span className="status-dot" style={{ backgroundColor: color }} />;
-  };
-
   return (
     <div className="dashboard-wrapper">
       <header className="dashboard-header">
@@ -370,48 +344,13 @@ function Dashboard() {
         ) : (
           <>
             {activeTab === 'resources' && (
-              <div className="calendar-container">
-                <div className="calendar-nav">
-                  <button onClick={() => changeMonth(-1)}>&lt;</button>
-                  <h3>
-                    {currentDate.toLocaleDateString('ru', { month: 'long', year: 'numeric' })}
-                  </h3>
-                  <button onClick={() => changeMonth(1)}>&gt;</button>
-                </div>
-                <div className="calendar-grid">
-                  <div className="calendar-header">
-                    {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(day => (
-                      <div key={day} className="calendar-cell header">{day}</div>
-                    ))}
-                  </div>
-                  <div className="calendar-body" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gridTemplateRows: `repeat(${numWeeks}, 1fr)` }}>
-                    {cells.map((cell, idx) => (
-                      <div
-                        key={idx}
-                        className={`calendar-cell ${cell ? 'clickable' : 'empty'}`}
-                        onClick={cell ? () => handleDayClick(cell.dateStr) : undefined}
-                      >
-                        {cell && (
-                          <>
-                            <div className="day-number">{cell.day}</div>
-                            <div className="resource-list">
-                              {cell.resources.slice(0, 3).map(r => (
-                                <div key={r.id} className={`resource-item ${!r.is_active ? 'inactive' : ''}`}>
-                                  <StatusDot status={r.status} isActive={r.is_active} />
-                                  <span className="resource-name">{r.name}</span>
-                                </div>
-                              ))}
-                              {cell.resources.length > 3 && (
-                                <div className="more-resources">+{cell.resources.length - 3}</div>
-                              )}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <Calendar
+                cells={cells}
+                numWeeks={numWeeks}
+                currentDate={currentDate}
+                onChangeMonth={changeMonth}
+                onDayClick={handleDayClick}
+              />
             )}
 
             {activeTab === 'bookings' && (
@@ -476,163 +415,52 @@ function Dashboard() {
         )}
       </div>
 
-      {/* Модальное окно дня (список ресурсов) */}
+      {/* Модальное окно дня */}
       {showDayModal && (
-        <div className="modal-overlay" onClick={() => setShowDayModal(false)}>
-          <div className="modal-content day-modal" onClick={e => e.stopPropagation()}>
-            <h2>{new Date(selectedDay).toLocaleDateString('ru', { day: 'numeric', month: 'long', year: 'numeric' })}</h2>
-            {dayResources.length === 0 ? (
-              isAdmin ? (
-                <div>
-                  <p>Нет ресурсов</p>
-                  <button className="submit-btn" onClick={() => { setShowDayModal(false); openAddResource(selectedDay); }}>
-                    Создать ресурс на этот день
-                  </button>
-                </div>
-              ) : (
-                <p>Нет доступных ресурсов</p>
-              )
-            ) : (
-              <ul className="resource-day-list">
-                {dayResources.map(r => (
-                  <li key={r.id} className={!r.is_active ? 'inactive' : ''}>
-                    <StatusDot status={r.status} isActive={r.is_active} />
-                    <span className="resource-info">
-                      <strong>{r.name}</strong> ({r.type || 'не указан'})
-                      {!r.is_active && <em className="inactive-label"> (Неактивен)</em>}
-                      {r.status === 'expired' && <em className="expired-label"> (истёк)</em>}
-                    </span>
-                    <div className="resource-actions">
-                      {r.is_active && r.status !== 'expired' && (
-                        <button className="submit-btn" onClick={() => startBookingFromDay(r)}>Забронировать</button>
-                      )}
-                      {isAdmin && (
-                        <>
-                          <button className="complete-book-btn" onClick={() => { setShowDayModal(false); openEditResource(r); }}>Редактировать</button>
-                          <button className="cancel-book-btn" onClick={() => { setShowDayModal(false); deleteResource(r.id, r.name); }}>Удалить</button>
-                        </>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
+        <DayModal
+          selectedDay={selectedDay}
+          dayResources={dayResources}
+          isAdmin={isAdmin}
+          onClose={() => setShowDayModal(false)}
+          onBooking={startBookingFromDay}
+          onEditResource={(resource) => openEditResource(resource)}
+          onDeleteResource={(resource) => deleteResource(resource.id, resource.name)}
+          onAddResource={() => openAddResource(selectedDay)}
+        />
       )}
 
-      {/* Модальное окно бронирования */}
-      {showModal && selectedResource && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2>Бронирование: {selectedResource.name}</h2>
-            <form onSubmit={handleBookingSubmit} className="booking-form">
-              <div className="field">
-                <label>Дата</label>
-                <input type="date" value={bookingDate} onChange={e => setBookingDate(e.target.value)} required />
-              </div>
-              {selectedResource.available_from && selectedResource.available_until && (
-                <div className="availability-info">
-                  Доступное время:{' '}
-                  <strong>
-                    с {new Date(selectedResource.available_from).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })}{' '}
-                    до {new Date(selectedResource.available_until).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })}
-                  </strong>
-                </div>
-              )}
-              <div className="field">
-                <label>Время начала</label>
-                <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} required />
-              </div>
-              <div className="field">
-                <label>Время окончания</label>
-                <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} required />
-              </div>
-              <div className="field">
-                <label>Цель (необязательно)</label>
-                <input type="text" placeholder="Совещание, встреча..." value={purpose} onChange={e => setPurpose(e.target.value)} />
-              </div>
-              {bookingError && <p className="error-message">{bookingError}</p>}
-              {bookingDate && (
-                <div className="slots-info">
-                  <h4>Занятые слоты на {bookingDate}:</h4>
-                  {slots.length === 0 ? (
-                    <p>На этот день броней нет</p>
-                  ) : (
-                    <ul>
-                      {slots.map((s, i) => (
-                        <li key={i}>
-                          {new Date(s.start_time).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })} –{' '}
-                          {new Date(s.end_time).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })}
-                          {s.purpose && ` (${s.purpose})`}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
-              <div className="modal-actions">
-                <button type="submit" className="submit-btn" disabled={bookingLoading}>
-                  {bookingLoading ? 'Создаётся...' : 'Забронировать'}
-                </button>
-                <button type="button" className="cancel-btn" onClick={() => setShowModal(false)}>Отмена</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Модальное окно создания/редактирования ресурса */}
+      {/* Модальное окно ресурса */}
       {showResourceModal && (
-        <div className="modal-overlay" onClick={() => setShowResourceModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2>{editingResource ? 'Редактировать ресурс' : 'Новый ресурс'}</h2>
-            <form onSubmit={handleResourceSubmit} className="booking-form">
-              <div className="field">
-                <label>Название *</label>
-                <input type="text" value={resForm.name} onChange={e => setResForm({ ...resForm, name: e.target.value })} required />
-              </div>
-              <div className="field">
-                <label>Тип</label>
-                <input type="text" placeholder="переговорка, оборудование..." value={resForm.type}
-                       onChange={e => setResForm({ ...resForm, type: e.target.value })} />
-              </div>
-              <div className="field">
-                <label>Вместимость</label>
-                <input type="number" value={resForm.capacity} onChange={e => setResForm({ ...resForm, capacity: e.target.value })} />
-              </div>
-              <div className="field">
-                <label>Описание</label>
-                <textarea rows={3} value={resForm.description} onChange={e => { setResForm({ ...resForm, description: e.target.value }); autoResize(e); }}
-                          style={{ minHeight: '5rem' }} />
-              </div>
-              <div className="field">
-                <label>Доступность с</label>
-                <input type="datetime-local" value={resForm.available_from}
-                       onChange={e => setResForm({ ...resForm, available_from: e.target.value })} />
-              </div>
-              <div className="field">
-                <label>Доступность по</label>
-                <input type="datetime-local" value={resForm.available_until}
-                       onChange={e => setResForm({ ...resForm, available_until: e.target.value })} />
-              </div>
-              <div className="field">
-                <label>
-                  <input type="checkbox" checked={resForm.is_active}
-                         onChange={e => setResForm({ ...resForm, is_active: e.target.checked })} />
-                  {' '}Активен
-                </label>
-              </div>
-              {resFormError && <p className="error-message">{resFormError}</p>}
-              <div className="modal-actions">
-                <button type="submit" className="submit-btn" disabled={resFormLoading}>
-                  {resFormLoading ? 'Сохранение...' : editingResource ? 'Сохранить' : 'Создать'}
-                </button>
-                <button type="button" className="cancel-btn" onClick={() => setShowResourceModal(false)}>Отмена</button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <ResourceModal
+          editingResource={editingResource}
+          resForm={resForm}
+          onFormChange={(field, value) => setResForm(prev => ({ ...prev, [field]: value }))}
+          onAutoResize={autoResize}
+          resFormError={resFormError}
+          resFormLoading={resFormLoading}
+          onSubmit={handleResourceSubmit}
+          onClose={() => setShowResourceModal(false)}
+        />
+      )}
+
+      {/* Модальное окно бронирования — теперь с условием showModal */}
+      {showModal && (
+        <BookingModal
+          selectedResource={selectedResource}
+          bookingDate={bookingDate}
+          onDateChange={setBookingDate}
+          startTime={startTime}
+          onStartTimeChange={setStartTime}
+          endTime={endTime}
+          onEndTimeChange={setEndTime}
+          purpose={purpose}
+          onPurposeChange={setPurpose}
+          slots={slots}
+          bookingError={bookingError}
+          bookingLoading={bookingLoading}
+          onSubmit={handleBookingSubmit}
+          onClose={() => setShowModal(false)}
+        />
       )}
     </div>
   );
