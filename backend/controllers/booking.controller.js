@@ -1,9 +1,72 @@
 const { BookingRequestDTO, BookingResponseDTO } = require('../dtos/booking.dto');
 const bookingService = require('../services/booking.service');
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     BookingRequest:
+ *       type: object
+ *       required:
+ *         - resource_id
+ *         - start_time
+ *         - end_time
+ *       properties:
+ *         resource_id:
+ *           type: integer
+ *         start_time:
+ *           type: string
+ *           format: date-time
+ *         end_time:
+ *           type: string
+ *           format: date-time
+ *         purpose:
+ *           type: string
+ *     BookingResponse:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         resource_id:
+ *           type: integer
+ *         user_id:
+ *           type: integer
+ *         start_time:
+ *           type: string
+ *           format: date-time
+ *         end_time:
+ *           type: string
+ *           format: date-time
+ *         status:
+ *           type: string
+ *         purpose:
+ *           type: string
+ *         resource_name:
+ *           type: string
+ */
+
 const bookingController = {
   /**
-   * Мои бронирования
+   * @swagger
+   * /api/bookings/me:
+   *   get:
+   *     summary: Получить бронирования текущего пользователя
+   *     tags: [Bookings]
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Массив бронирований
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 $ref: '#/components/schemas/BookingResponse'
+   *       401:
+   *         description: Требуется авторизация
+   *       500:
+   *         description: Ошибка сервера
    */
   async getMine(req, res) {
     try {
@@ -16,7 +79,34 @@ const bookingController = {
   },
 
   /**
-   * Создание бронирования
+   * @swagger
+   * /api/bookings:
+   *   post:
+   *     summary: Создать бронирование
+   *     tags: [Bookings]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/BookingRequest'
+   *     responses:
+   *       201:
+   *         description: Созданное бронирование
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/BookingResponse'
+   *       400:
+   *         description: Ошибка валидации или ресурс неактивен/время недоступно
+   *       404:
+   *         description: Ресурс не найден
+   *       409:
+   *         description: Время уже занято
+   *       500:
+   *         description: Ошибка сервера
    */
   async create(req, res) {
     const dto = new BookingRequestDTO(req.body);
@@ -40,7 +130,28 @@ const bookingController = {
   },
 
   /**
-   * Отмена бронирования
+   * @swagger
+   * /api/bookings/{id}:
+   *   delete:
+   *     summary: Отменить бронирование
+   *     tags: [Bookings]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: Бронирование отменено
+   *       403:
+   *         description: Нет прав
+   *       404:
+   *         description: Бронирование не найдено
+   *       500:
+   *         description: Ошибка сервера
    */
   async cancel(req, res) {
     const bookingId = parseInt(req.params.id);

@@ -80,7 +80,7 @@ function Dashboard() {
     const month = currentDate.getMonth() + 1;
     const fetchStatus = async () => {
       try {
-        const res = await fetch(`/api/resources/status?year=${year}&month=${month}`, { headers });
+        const res = await fetch(`/api/resources/availability?year=${year}&month=${month}`, { headers });
         if (!res.ok) throw new Error('Ошибка загрузки статуса');
         const data = await res.json();
         setCalendarData(data);
