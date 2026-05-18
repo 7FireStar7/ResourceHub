@@ -162,9 +162,6 @@ function LoginSignup() {
             <button type="submit" className="submit-btn" disabled={loginLoading}>
               {loginLoading ? 'Signing In...' : 'Sign In'}
             </button>
-            <a href="#" className="forgot-link" onClick={(e) => e.preventDefault()}>
-              Forgot password?
-            </a>
           </form>
         )}
 
