@@ -5,33 +5,14 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('./db');
 
+// Импортируем middleware из отдельного модуля
+const { authenticateToken, requireAdmin } = require('./middleware/auth.middleware');
+
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET;
-
-// Middleware проверки токена
-function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Требуется авторизация' });
-
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return res.status(403).json({ error: 'Недействительный токен' });
-        req.user = user; // { userId, isAdmin }
-        next();
-    });
-}
-
-// Middleware проверки администратора
-function requireAdmin(req, res, next) {
-    if (!req.user || !req.user.isAdmin) {
-        return res.status(403).json({ error: 'Доступ запрещён. Требуются права администратора.' });
-    }
-    next();
-}
 
 // ============================================================
 // Аутентификация
@@ -54,7 +35,7 @@ app.post('/api/auth/register', async (req, res) => {
         );
         const user = result.rows[0];
 
-        const token = jwt.sign({ userId: user.id, isAdmin: user.is_admin }, JWT_SECRET, { expiresIn: '7d' });
+        const token = jwt.sign({ userId: user.id, isAdmin: user.is_admin }, process.env.JWT_SECRET, { expiresIn: '7d' });
         res.status(201).json({ token, user: { id: user.id, full_name: user.full_name, email: user.email, is_admin: user.is_admin } });
     } catch (err) {
         console.error('Ошибка при регистрации:', err);
@@ -74,7 +55,7 @@ app.post('/api/auth/login', async (req, res) => {
         const valid = await bcrypt.compare(password, user.password_hash);
         if (!valid) return res.status(401).json({ error: 'Неверный email или пароль' });
 
-        const token = jwt.sign({ userId: user.id, isAdmin: user.is_admin }, JWT_SECRET, { expiresIn: '7d' });
+        const token = jwt.sign({ userId: user.id, isAdmin: user.is_admin }, process.env.JWT_SECRET, { expiresIn: '7d' });
         res.json({ token, user: { id: user.id, full_name: user.full_name, email: user.email, is_admin: user.is_admin } });
     } catch (err) {
         console.error('Ошибка при входе:', err);
@@ -86,7 +67,6 @@ app.post('/api/auth/login', async (req, res) => {
 // Ресурсы (CRUD + статус занятости)
 // ============================================================
 
-// Получить все ресурсы (для админки)
 app.get('/api/resources', authenticateToken, async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM resources ORDER BY id');
@@ -97,7 +77,6 @@ app.get('/api/resources', authenticateToken, async (req, res) => {
     }
 });
 
-// Занятые слоты ресурса на дату
 app.get('/api/resources/:id/slots', authenticateToken, async (req, res) => {
     const resourceId = parseInt(req.params.id);
     const { date } = req.query;
@@ -140,7 +119,6 @@ app.get('/api/resources/status', authenticateToken, async (req, res) => {
     const endOfMonth = new Date(Date.UTC(y, m, 0, 23, 59, 59, 999));
 
     try {
-        // Базовый запрос ресурсов, которые пересекаются с месяцем
         let resourcesQuery = `
             SELECT * FROM resources
             WHERE available_from IS NOT NULL
@@ -150,7 +128,6 @@ app.get('/api/resources/status', authenticateToken, async (req, res) => {
         `;
         const queryParams = [endOfMonth, startOfMonth];
 
-        // Для обычного пользователя фильтруем только активные ресурсы
         if (!req.user.isAdmin) {
             resourcesQuery += ' AND is_active = true';
         }
@@ -162,7 +139,6 @@ app.get('/api/resources/status', authenticateToken, async (req, res) => {
             return res.json({ days: {} });
         }
 
-        // Получаем ВСЕ активные бронирования этих ресурсов за месяц
         const bookingsRes = await pool.query(
             `SELECT b.resource_id, b.start_time, b.end_time
              FROM bookings b
@@ -197,7 +173,6 @@ app.get('/api/resources/status', authenticateToken, async (req, res) => {
 
                 if (availStart > dayEnd || availEnd < dayStart) continue;
 
-                // Определяем статус истёкшего периода
                 if (availEnd < now) {
                     dayResources.push({
                         id: res.id,
@@ -213,7 +188,6 @@ app.get('/api/resources/status', authenticateToken, async (req, res) => {
                     continue;
                 }
 
-                // Рабочие часы в этот день
                 const workStartHour = availStart.getUTCHours();
                 const workStartMinute = availStart.getUTCMinutes();
                 const workEndHour = availEnd.getUTCHours();
@@ -348,7 +322,7 @@ app.delete('/api/resources/:id', authenticateToken, requireAdmin, async (req, re
 });
 
 // ============================================================
-// Бронирования (с проверкой активности ресурса)
+// Бронирования
 // ============================================================
 
 app.get('/api/bookings/me', authenticateToken, async (req, res) => {
@@ -385,12 +359,10 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
 
         const resource = resCheck.rows[0];
 
-        // Проверка, что ресурс активен
         if (!resource.is_active) {
             return res.status(400).json({ error: 'Ресурс неактивен, бронирование невозможно' });
         }
 
-        // Проверка вхождения времени в период доступности ресурса
         if (resource.available_from && resource.available_until) {
             if (start < resource.available_from || end > resource.available_until) {
                 return res.status(400).json({ error: 'Время бронирования выходит за пределы доступности ресурса' });
