@@ -235,9 +235,10 @@ UPDATE users SET is_admin = true WHERE email = 'admin@example.com';
    В папке `backend` создайте файл `.env` со следующим содержимым:
    ```
    PORT=3001
-   DATABASE_URL=postgres://postgres:ваш_пароль@localhost:5432/resourcehub
+DATABASE_URL=postgres://логин:пароль@localhost:5432/resourcehub
    JWT_SECRET=ваш_секретный_ключ
    ```
+Замените `логин` и `пароль` на ваши учётные данные от PostgreSQL.
 
 5. **Запуск сервера**
    ```bash
