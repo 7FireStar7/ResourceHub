@@ -113,9 +113,10 @@
 CREATE UNIQUE INDEX bookings_active_no_overlap
 ON bookings (resource_id, tstzrange(start_time, end_time))
 WHERE status = 'active';
+```
 
 Этот частичный уникальный индекс гарантирует, что для одного ресурса не может существовать двух активных броней с пересекающимися временными интервалами. Отменённые (cancelled) и завершённые (completed) брони не блокируют создание новых — подробнее в разделе 5.
-```
+
 
 ## 4. API Reference
 
@@ -200,7 +201,7 @@ WHERE status = 'active';
 Права администратора выдаются вручную через базу данных:  
 ```sql
 UPDATE users SET is_admin = true WHERE email = 'admin@example.com';
-
+```
 
 ## 7. Инструкция по локальному запуску
 
