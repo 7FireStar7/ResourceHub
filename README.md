@@ -21,9 +21,8 @@
 | Слой | Технологии |
 |------|-----------|
 | **Frontend** | React 18, Vite, React Router v6, CSS |
-| **Backend**  | Node.js, Express, jsonwebtoken, bcrypt |
-| **Database** | PostgreSQL, pg (node-postgres), btree_gist |
-| **Tools**    | Git, GitHub, pgAdmin, VS Code |
+| **Backend**  | Node.js, Express, |
+| **Database** | PostgreSQL, pg (node-postgres)|
 
 ---
 
